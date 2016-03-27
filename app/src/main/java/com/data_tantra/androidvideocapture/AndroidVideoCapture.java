@@ -111,14 +111,27 @@ public class AndroidVideoCapture extends Activity{
         mediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
         mediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
-
-        mediaRecorder.setOutputFile("/sdcard/myvideo.mp4");
-        mediaRecorder.setMaxDuration(60000); // Set max duration 60 sec.
-        mediaRecorder.setMaxFileSize(5000000); // Set max file size 5M
+        long time= System.currentTimeMillis();
+        mediaRecorder.setOutputFile("/sdcard/myvideo" + time + ".mp4");
+        mediaRecorder.setMaxDuration(6000); // Set max duration 60 sec.
+        /*mediaRecorder.setMaxFileSize(5000000); // Set max file size 5M*/
 
         mediaRecorder.setPreviewDisplay(myCameraSurfaceView.getHolder().getSurface());
         mediaRecorder.setOrientationHint(AndroidVideoCapture.orientation);
+        mediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
+            @Override
+            public void onInfo(MediaRecorder mr, int what, int extra) {
 
+                if(MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED==what){
+                    mediaRecorder.stop();  // stop the recording
+                    releaseMediaRecorder(); // release the MediaRecorder object
+
+                    releaseCamera();
+                    prepareMediaRecorder();
+                    mediaRecorder.start();
+                }
+            }
+        });
         try {
             mediaRecorder.prepare();
         } catch (IllegalStateException e) {
@@ -132,6 +145,7 @@ public class AndroidVideoCapture extends Activity{
 
     }
 
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -140,7 +154,7 @@ public class AndroidVideoCapture extends Activity{
     }
 
     private void releaseMediaRecorder(){
-        if (mediaRecorder != null) {
+        if (mediaRecorder != null){
             mediaRecorder.reset();   // clear recorder configuration
             mediaRecorder.release(); // release the recorder object
             mediaRecorder = null;
